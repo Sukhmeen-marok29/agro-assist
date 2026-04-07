@@ -1,4 +1,6 @@
 streamlit
+pandas
+scikit-learn
 tensorflow-cpu
 numpy
 Pillow

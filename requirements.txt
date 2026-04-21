@@ -2,4 +2,4 @@ streamlit
 tensorflow
 scikit-learn
 numpy
-pillow
+Pillow

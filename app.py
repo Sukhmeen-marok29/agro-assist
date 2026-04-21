@@ -17,8 +17,8 @@ from PIL import Image
 # 1. LOAD MODELS
 try:
     # Adjust paths if your files are in a different folder
-    crop_model = pickle.load(open('./data/crop_model.pkl', 'rb'))
-    disease_model = tf.keras.models.load_model('data/disease_model.h5', compile=False)
+    crop_model = pickle.load(open('crop_model.pkl', 'rb'))
+    disease_model = tf.keras.models.load_model('disease_model.h5', compile=False)
 except Exception as e:
     st.error(f"Error loading models: {e}")
 

@@ -9,4 +9,4 @@ y=df['label']
 model=RandomForestClassifier()
 model.fit(X,y)
 
-pickle.dump(model,open('croop_model.pkl','wb'))
+pickle.dump(model,open('crop_model.pkl','wb'))

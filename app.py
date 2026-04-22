@@ -1,5 +1,10 @@
+import os 
 import sys
 import numpy as np
+import streamlit as st
+import pickle
+import tensorflow as tf
+from PIL import Image
 
 # THE BRIDGE: Prevents 'numpy._core' errors if your environment updates
 try:
@@ -7,32 +12,39 @@ try:
     sys.modules['numpy._core'] = np
     sys.modules['numpy._core.multiarray'] = numpy.core.multiarray
 except ImportError:
-    pass
-import os
-import streamlit as st
-import pickle
-import tensorflow as tf
-from PIL import Image
-
+    pass    
 # 1. LOAD MODELS
 BASE_DIR=os.path.dirname(os.path.abspath(__file__))
 
 CROP_MODEL_PATH=os.path.join(BASE_DIR, 'crop_model.pkl')
 DISEASE_MODEL_PATH=os.path.join(BASE_DIR,'disease_model.h5')
 
-if os.path.exists(CROP_MODEL_PATH):
+@st.cache_resource
+def load_models():
+ loaded_crop_model=None
+ loaded_disease_model=None
+
+ if os.path.exists(CROP_MODEL_PATH):
+  try:  
     with open(CROP_MODEL_PATH, 'rb') as f:
-        crop_model=pickle.load(f)
-else:
+     crop_model=pickle.load(f)
+  except Exception as e:
+        st.error(f"Error loading Crop Model: {e}")
+        
+ else:
     st.error(f"Error:{CROP_MODEL_PATH} not found!")
     
     if os.path.exists(DISEASE_MODEL_PATH):
-        with open(DISEASE_MODEL_PATH, 'rb')as f:
-            disease_model=pickle.load(f)
+        try:
+             loaded_disease_model=tf.keras.models.load_model(DISEASE_MODEL_PATH)
+        except Exception as e:
+             st.error(f"Error loading Disease Model: {e}")
     else:
-        st.error(f"Error:{DISEASE_MODEL_PATH}not found!")
-        
-
+             st.error(f"Disease Model file not found at: {DISEASE_MODEL_PATH}") 
+             
+ return loaded_crop_model,loaded_disease_model
+crop_model,disease_model=load_models()
+          
 def main():
     st.title("AGRI SMART: Intelligent Farming Assistant")
     
@@ -54,9 +66,12 @@ def main():
         rainfall = st.number_input("Rainfall (mm)", format="%.2f")
 
         if st.button("Recommend Crop"):
-            input_data = np.array([[n, p, k, temp, humidity, ph, rainfall]])
+            if crop_model is not None:
+             input_data = np.array([[n, p, k, temp, humidity, ph, rainfall]])
             prediction = crop_model.predict(input_data)
             st.success(f"The recommended crop is: {prediction[0]}")
+        else:
+            st.error("Crop model is not loaded. Check the error message at the top.")
 
     # --- SECTION 2: DISEASE DIAGNOSIS ---
     elif choice == "Disease Diagnosis":
@@ -68,12 +83,10 @@ def main():
             st.image(image, caption="Uploaded Image", width=400)
             
             if st.button("Diagnose Disease"):
-                try:
-                    # Resize to 200x200 as required by your model
+                if disease_model is not None:
+                 try:
                     target_size = (200, 200) 
                     img = image.resize(target_size) 
-                    
-                    # Preprocessing
                     img_array = np.array(img) / 255.0
                     img_array = np.expand_dims(img_array, axis=0)
                     
@@ -100,14 +113,16 @@ def main():
                         'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
                     ]
                     
-                    # Display result with confidence threshold
+                   
                     if confidence > 0.50:
                         st.success(f"Prediction: {classes[result_index]} ({confidence*100:.2f}% Confidence)")
                     else:
                         st.warning("Low confidence. The model might not recognize this specific plant.")
                         
-                except Exception as e:
+                 except Exception as e:
                     st.error(f"Prediction Error: {e}")
+            else:
+                    st.error("Disease model is not loaded. Check the error message at the top.")
 
 if __name__ == '__main__':
     main()

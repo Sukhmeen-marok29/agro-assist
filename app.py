@@ -8,19 +8,30 @@ try:
     sys.modules['numpy._core.multiarray'] = numpy.core.multiarray
 except ImportError:
     pass
-
+import os
 import streamlit as st
 import pickle
 import tensorflow as tf
 from PIL import Image
 
 # 1. LOAD MODELS
-try:
-    # Adjust paths if your files are in a different folder
-    crop_model = pickle.load(open('crop_model.pkl', 'rb'))
-    disease_model = tf.keras.models.load_model('disease_model.h5', compile=False)
-except Exception as e:
-    st.error(f"Error loading models: {e}")
+BASE_DIR=os.path.dirname(os.path.abspath(__file__))
+
+CROP_MODEL_PATH=os.path.join(BASE_DIR, 'crop_model.pkl')
+DISEASE_MODEL_PATH=os.path.join(BASE_DIR,'disease_model.h5')
+
+if os.path.exists(CROP_MODEL_PATH):
+    with open(CROP_MODEL_PATH, 'rb') as f:
+        crop_model=pickle.load(f)
+else:
+    st.error(f"Error:{CROP_MODEL_PATH} not found!")
+    
+    if os.path.exists(DISEASE_MODEL_PATH):
+        with open(DISEASE_MODEL_PATH, 'rb')as f:
+            disease_model=pickle.load(f)
+    else:
+        st.error(f"Error:{DISEASE_MODEL_PATH}not found!")
+        
 
 def main():
     st.title("AGRI SMART: Intelligent Farming Assistant")

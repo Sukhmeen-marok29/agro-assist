@@ -203,4 +203,3 @@ if user_q:
         except Exception as e:
             st.error("Bot is not responding . Kindly check your connection.")
     
-    st.sidebar.write("Bot: For better growth of wheat in Kapurthala, ensure first irrigation at 21 days after sowing (CRI stage).")

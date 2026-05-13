@@ -1,7 +1,7 @@
 streamlit
 streamlit-option-menu
 google-generativeai
-tensorflow-cpu
+tensorflow
 scikit-learn
 pillow
 numpy

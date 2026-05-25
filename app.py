@@ -9,6 +9,10 @@ import pandas as pd
 from PIL import Image
 from streamlit_option_menu import option_menu
 import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # New Official SDK Import for Gemini AI
 try:
@@ -16,6 +20,9 @@ try:
     from google.genai import types
 except ImportError:
     st.error("Please run: pip install google-genai")
+    
+api_key=os.getenv("GEMINI_API_KEY")
+client=genai.Client(api_key=api_key)
 
 # --- 1. CONFIG & SETTINGS ---
 st.set_page_config(page_title="Agri-Smart Pro", layout="wide")
@@ -25,10 +32,6 @@ if 'temp' not in st.session_state: st.session_state['temp'] = 0.0
 if 'hum' not in st.session_state: st.session_state['hum'] = 0.0
 if 'rain' not in st.session_state: st.session_state['rain'] = 0.0
 if 'chat_history' not in st.session_state: st.session_state['chat_history'] = []
-
-API_KEY_HIDDEN="AIzaSyBaztRD_PeWL2re07pLOyBIF7Qly6_mQGM"
-client=genai.Client(api_key=API_KEY_HIDDEN)
-
 
 # Language Dictionary
 LANG_DICT = {

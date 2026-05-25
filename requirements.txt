@@ -1,6 +1,6 @@
 streamlit
 streamlit-option-menu
-google-generativeai
+google-genai
 tensorflow
 scikit-learn
 pillow

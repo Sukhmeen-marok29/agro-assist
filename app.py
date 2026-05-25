@@ -10,7 +10,12 @@ from PIL import Image
 from streamlit_option_menu import option_menu
 import datetime
 from dotenv import load_dotenv
+
+# Load environmental variables locally
 load_dotenv()
+
+# Global fallback initialization to prevent NameErrors
+client = None
 
 try:
     from google import genai
@@ -18,12 +23,19 @@ try:
 except ImportError:
     st.error("Please run: pip install google-genai")
     
-api_key=os.getenv("GEMINI_API_KEY")
+# Clean Key Configuration Layer
+api_key = os.getenv("GEMINI_API_KEY")
+
+# Check Streamlit Cloud Secrets platform automatically if .env is missing
 if not api_key and "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
-    client = genai.Client(api_key=api_key)
-    
 
+# Setup client only if we successfully found an API key
+if api_key:
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as e:
+        st.error(f"Failed to initialize Gemini Client: {e}")
 
 st.set_page_config(page_title="Agri-Smart Pro", layout="wide")
 
@@ -82,8 +94,6 @@ LANG_DICT = {
 st.sidebar.title("Settings / ਸੈਟਿੰਗਾਂ")
 lang_choice = st.sidebar.radio("Select Language", ["English", "ਪੰਜਾਬੀ"])
 L = LANG_DICT[lang_choice]
-
-
 
 # KNOWLEDGE BASE & SOWING DATA
 SOWING_WINDOWS = {
@@ -165,18 +175,15 @@ def get_weather(city_name):
     return None, None, None       
 
 def get_sowing_advice(crop_name, lang):
-    # Step 1: Force extreme string safety clean up
     clean_name = str(crop_name).split(" / ")[0].strip().lower()
     current_month = datetime.datetime.now().month
     display_name = clean_name.title()
     
-    # Check if it exists in our dictionary
     if clean_name in SOWING_WINDOWS:
         win = SOWING_WINDOWS[clean_name]
     else:
         win = {"start": (current_month - 1) or 12, "end": (current_month + 1) if current_month < 12 else 1, "name_pa": display_name}
     
-  
     if win["start"] <= current_month <= win["end"]:
         status, color = ("✅ IDEAL TIME", "green") if lang == "English" else ("✅ ਸਹੀ ਸਮਾਂ", "green")
         msg = f"Perfect time to sow {display_name} right now." if lang == "English" else f"ਹੁਣ {win['name_pa']} ਬੀਜਣ ਦਾ ਸਹੀ ਸਮਾਂ ਹੈ।"
@@ -304,7 +311,6 @@ elif selected == L["disease_tab"]:
             ca.success(f"### 🌱 {L['organic']}\n{info['org']}")
             cb.error(f"### 💊 {L['chemical']}\n**{info['prod']}**: {info['cure']}")
             
-           
             if client:
                 st.markdown("---")
                 st.subheader(L["ai_advisor_title"])
@@ -312,36 +318,29 @@ elif selected == L["disease_tab"]:
                     ai_prescription = generate_ai_treatment(res, lang_choice)
                     st.markdown(ai_prescription)
 
-
 elif selected == L["bot_tab"]:
     st.subheader(L["bot_tab"])
     
     if not client:
         st.warning("Please provide a valid Gemini API Key configuration to interact with the Live Agri-Bot Companion.")
     else:
-      
         cc1, cc2 = st.columns([6, 1])
         with cc2:
             if st.button(L["bot_clear"]):
                 st.session_state['chat_history'] = []
                 st.rerun()
                 
-  
         for message in st.session_state['chat_history']:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
                 
-        
         if user_prompt := st.chat_input(L["bot_placeholder"]):
-            # Display user message instantly
             with st.chat_message("user"):
                 st.markdown(user_prompt)
             st.session_state['chat_history'].append({"role": "user", "content": user_prompt})
             
-            # Generate AI Context-Aware Response
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
-                   
                     system_context = (
                         "You are Agri-Bot, an advanced specialized agricultural AI companion assistant. "
                         f"Answer the user's questions accurately in their selected language: '{lang_choice}'. "
@@ -349,7 +348,6 @@ elif selected == L["bot_tab"]:
                         "fertilizer optimization schedules, or general agricultural market economics. "
                         "If asked about anything completely non-agricultural, politely guide the context back to farming."
                     )
-                    
                     
                     formatted_contents = []
                     for h in st.session_state['chat_history']:

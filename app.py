@@ -22,6 +22,7 @@ try:
     from google.genai import types
 except ImportError:
     st.error("Please run: pip install google-genai")
+    st.stop()
     
 # Clean Key Configuration Layer
 api_key = os.getenv("GEMINI_API_KEY")
@@ -256,7 +257,10 @@ if selected == L["crop_tab"]:
             res = crop_model.predict(data)[0]
         else: res = "Rice"
         
-        st.success(f"### {L['predict_btn']}: **{res}**")
+        st.session_state["last_crop_prediction"] = res
+        if"last_crop_prediction" in st.session_state:
+            predicted_crop = st.session_state["last_crop_prediction"]
+            st.success(f"##{L['predict_btn']}: **{predicted_crop}")
         
         advice = get_sowing_advice(res, lang_choice)
         if advice:
@@ -270,6 +274,7 @@ elif selected == L["disease_tab"]:
     if file:
         img = Image.open(file)
         st.image(img, width=300)
+        
         if st.button(L["analyze_btn"]):
             if disease_model:
                 img_resized = img.resize((200, 200))
@@ -302,6 +307,12 @@ elif selected == L["disease_tab"]:
             else: 
                 res = "healthy"
                 confidence = 100.0
+                
+            st.session_state["last_disease_prediction"] = {"res":res, "confidence": confidence}
+            
+            if "last_disease_prediction" in st.session_state:
+                diag_date = st.session_state["last_disease_prediction"]
+                res_class= diag_date["res"]
 
             k = 'en' if lang_choice == "English" else 'pa'
             info = DISEASE_INFO.get(res, DISEASE_INFO['healthy'])[k]

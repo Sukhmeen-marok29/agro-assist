@@ -19,7 +19,11 @@ except ImportError:
     st.error("Please run: pip install google-genai")
     
 api_key=os.getenv("GEMINI_API_KEY")
-client=genai.Client(api_key=api_key)
+if not api_key and "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    client = genai.Client(api_key=api_key)
+    
+
 
 st.set_page_config(page_title="Agri-Smart Pro", layout="wide")
 

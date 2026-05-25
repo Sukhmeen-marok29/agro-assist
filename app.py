@@ -10,11 +10,8 @@ from PIL import Image
 from streamlit_option_menu import option_menu
 import datetime
 from dotenv import load_dotenv
-
 load_dotenv()
 
-
-# New Official SDK Import for Gemini AI
 try:
     from google import genai
     from google.genai import types
@@ -24,10 +21,9 @@ except ImportError:
 api_key=os.getenv("GEMINI_API_KEY")
 client=genai.Client(api_key=api_key)
 
-# --- 1. CONFIG & SETTINGS ---
 st.set_page_config(page_title="Agri-Smart Pro", layout="wide")
 
-# Initialize Session State Variables
+# Initialize session state var
 if 'temp' not in st.session_state: st.session_state['temp'] = 0.0
 if 'hum' not in st.session_state: st.session_state['hum'] = 0.0
 if 'rain' not in st.session_state: st.session_state['rain'] = 0.0
@@ -85,7 +81,7 @@ L = LANG_DICT[lang_choice]
 
 
 
-# --- 2. KNOWLEDGE BASE & SOWING DATA ---
+# KNOWLEDGE BASE & SOWING DATA
 SOWING_WINDOWS = {
     "wheat": {"start": 10, "end": 11, "name_pa": "ਕਣਕ"},
     "rice": {"start": 6, "end": 7, "name_pa": "ਝੋਨਾ"},
@@ -144,7 +140,7 @@ DISEASE_INFO = {
     }
 }
 
-# --- 3. HELPER FUNCTIONS ---
+# HELPER FUNCTIONS 
 @st.cache_resource
 def load_models():
     c_m = pickle.load(open('crop_model.pkl', 'rb')) if os.path.exists('crop_model.pkl') else None
@@ -170,15 +166,13 @@ def get_sowing_advice(crop_name, lang):
     current_month = datetime.datetime.now().month
     display_name = clean_name.title()
     
-    # Step 2: Check if it exists in our dictionary
+    # Check if it exists in our dictionary
     if clean_name in SOWING_WINDOWS:
         win = SOWING_WINDOWS[clean_name]
     else:
-        # FAILSAFE BACKUPL: If the crop is completely unexpected, dynamically assign a dummy safe calendar window 
-        # so the application NEVER crashes or shows an empty slate during your evaluation.
         win = {"start": (current_month - 1) or 12, "end": (current_month + 1) if current_month < 12 else 1, "name_pa": display_name}
     
-    # Step 3: Run calendar calculations
+  
     if win["start"] <= current_month <= win["end"]:
         status, color = ("✅ IDEAL TIME", "green") if lang == "English" else ("✅ ਸਹੀ ਸਮਾਂ", "green")
         msg = f"Perfect time to sow {display_name} right now." if lang == "English" else f"ਹੁਣ {win['name_pa']} ਬੀਜਣ ਦਾ ਸਹੀ ਸਮਾਂ ਹੈ।"
@@ -191,7 +185,6 @@ def get_sowing_advice(crop_name, lang):
         
     return {"status": status, "msg": msg, "color": color}
 
-# Dynamic AI Treatment Advisor Logic (Feature 1)
 def generate_ai_treatment(disease_class, lang):
     if not client:
         return "AI features unavailable. Set up Gemini API key to view deep strategic insight instructions here."
@@ -219,7 +212,7 @@ def generate_ai_treatment(disease_class, lang):
     except Exception as e:
         return f"Error communicating with AI Advisor module: {e}"
 
-# --- 4. MAIN INTERFACE ---
+# main
 st.title(L["title"])
 st.markdown("---")
 
@@ -307,7 +300,7 @@ elif selected == L["disease_tab"]:
             ca.success(f"### 🌱 {L['organic']}\n{info['org']}")
             cb.error(f"### 💊 {L['chemical']}\n**{info['prod']}**: {info['cure']}")
             
-            # Integrated AI Treatment Advisor Layer Output
+           
             if client:
                 st.markdown("---")
                 st.subheader(L["ai_advisor_title"])
@@ -315,26 +308,26 @@ elif selected == L["disease_tab"]:
                     ai_prescription = generate_ai_treatment(res, lang_choice)
                     st.markdown(ai_prescription)
 
-# --- NEW TAB FEATURE: AGRI-BOT AI CHATBOT (Feature 2) ---
+
 elif selected == L["bot_tab"]:
     st.subheader(L["bot_tab"])
     
     if not client:
         st.warning("Please provide a valid Gemini API Key configuration to interact with the Live Agri-Bot Companion.")
     else:
-        # Layout container split for chat layout controls
+      
         cc1, cc2 = st.columns([6, 1])
         with cc2:
             if st.button(L["bot_clear"]):
                 st.session_state['chat_history'] = []
                 st.rerun()
                 
-        # Display Conversational History Elements using native UI elements
+  
         for message in st.session_state['chat_history']:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
                 
-        # Handle New Inbound Message Input
+        
         if user_prompt := st.chat_input(L["bot_placeholder"]):
             # Display user message instantly
             with st.chat_message("user"):
@@ -344,7 +337,7 @@ elif selected == L["bot_tab"]:
             # Generate AI Context-Aware Response
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
-                    # Structural prompt wrapper to keep bot focused as an elite farming domain engine
+                   
                     system_context = (
                         "You are Agri-Bot, an advanced specialized agricultural AI companion assistant. "
                         f"Answer the user's questions accurately in their selected language: '{lang_choice}'. "
@@ -353,7 +346,7 @@ elif selected == L["bot_tab"]:
                         "If asked about anything completely non-agricultural, politely guide the context back to farming."
                     )
                     
-                    # Convert history format safely to standard SDK types
+                    
                     formatted_contents = []
                     for h in st.session_state['chat_history']:
                         role = "user" if h["role"] == "user" else "model"

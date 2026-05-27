@@ -11,10 +11,8 @@ from streamlit_option_menu import option_menu
 import datetime
 from dotenv import load_dotenv
 
-# Load environmental variables locally
 load_dotenv()
 
-# Global fallback initialization to prevent NameErrors
 client = None
 
 try:

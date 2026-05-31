@@ -220,7 +220,17 @@ def generate_ai_treatment(disease_class, lang):
         )
         return response.text
     except Exception as e:
-        return f"Error communicating with AI Advisor module: {e}"
+        error_str=str(e).lower()
+        if "503" in error_str or "unavailable" in error_str or "exhausted" in error_str:
+            if lang == "English":
+                return "AI Advisor is currently overloaded. Please try again in a few moments for your personalized treatment plan."
+            else:
+                return "AI ਸਲਾਹਕਾਰ ਇਸ ਸਮੇਂ ਬਹੁਤ ਵਿਆਸਤ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕੁਝ ਪਲਾਂ ਬਾਅਦ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+        else:
+            if lang== "English":
+                return f"Error communicating with AI Advisor module: {e}"
+            else:
+                return f"AI ਸਲਾਹਕਾਰ ਨਾਲ ਸੰਪਰਕ ਕਰਨ ਵਿੱਚ ਤ੍ਰੁੱਟੀ: {e}"
 
 # main
 st.title(L["title"])
